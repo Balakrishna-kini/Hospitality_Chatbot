@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ hotel_name }} Chatbot</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('https://placeholder.svg?height=1080&width=1920&text=Tropical+Beach+Background');
+            background-size: cover;
+            background-position: center;
+        }
+        .chat-container {
+            width: 800px;
+            height: 700px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            font-size: 1.2em;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 20px;
+            max-width: 80%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .user-message {
+            background-color: #e1f5fe;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .bot-message {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+        }
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 1em;
+        }
+        #send-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #send-button:hover {
+            background-color: #45a049;
+        }
+        .chat-history {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>{{ hotel_name }} Virtual Concierge</h2>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Ask about our hotel services...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+
+        function addMessage(message, isUser) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
+            messageElement.textContent = message;
+            
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function displayFormattedMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-history');
+            messageElement.innerHTML = message.replace(/\n/g, '<br>');
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                addMessage(message, true);
+                userInput.value = '';
+
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message, user_id: 'user1' }),
+                    });
+                    const data = await response.json();
+                    if (data.type === "history") {
+                        displayFormattedMessage(data.response);
+                    } else {
+                        addMessage(data.response, false);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    addMessage('Sorry, there was an error processing your request. Please try again.', false);
+                }
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initial greeting
+        addMessage('Welcome to {{ hotel_name }}! I\'m your virtual concierge. How may I assist you with your stay?', false);
+    </script>
+</body>
+</html>
+
